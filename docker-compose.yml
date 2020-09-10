@@ -36,7 +36,21 @@ services:
 
   housekeeping:
     build: ./housekeeping
-    command: /app/ddosdb-docker.db
+    depends_on:
+      - elasticsearch
+        #    command: /app/ddosdb-docker.db
+    command: >
+      /bin/bash -c "
+        while ! curl elasticsearch:9200;
+
+        do
+          echo elasticsearch service probably not ready yet..;
+          sleep 1;
+        done;
+
+        echo elasticsearch ready, time to boostrap!;
+        /app/ddosdb-docker.db
+      "
 
 volumes:
   elasticsearch-data:
