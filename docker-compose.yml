@@ -21,18 +21,15 @@ services:
       - IPC_LOCK
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
-        #ports:
-        # - 127.0.0.1:9200:9200
 
   ddosdb:
-    #image: 61dd
     build: .
     container_name: ddosdb
     command: python manage.py runserver 0.0.0.0:8000
-    # volumes:
-      #- elasticsearch-data:/usr/share/elasticsearch/data
     ports:
       - 127.0.0.1:8000:8000
+    volumes:
+      - ddosdb-data:/app/storage
 
   housekeeping:
     build: ./housekeeping
@@ -40,4 +37,6 @@ services:
 
 volumes:
   elasticsearch-data:
+    driver: local
+  ddosdb-data:
     driver: local

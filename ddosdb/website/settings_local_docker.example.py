@@ -17,7 +17,7 @@ ADMINS = [("Your Name", "Your.Name@your.org")]
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3'
+        'NAME': 'storage/db.sqlite3'
     }
 }
 
