@@ -20,5 +20,6 @@
     <button class="btn btn-lg btn-secondary btn-block" type="submit">Sign in</button>
         <br><a href="{% url "index" %}" class="text-dark pt-3"><i class="fa fa-arrow-left"></i> Back home</a>
 </form>
+<input type="hidden" name="next" value="{{ next }}" />
 </body>
 </html>
