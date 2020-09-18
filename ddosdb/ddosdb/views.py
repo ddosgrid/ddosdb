@@ -160,9 +160,77 @@ def signout(request):
     logout(request)
     return redirect("index")
 
-
 @login_required()
 def query(request):
+    start = time.time()
+    context = {
+        "results": [],
+        "comments": {},
+        "q": "",
+        "p": 1,
+        "o": "_score",
+        "pages": range(1, 1),
+        "amount": 0,
+        "error": "",
+        "time": 0
+    }
+
+    if "q" in request.GET:
+        if "p" in request.GET:
+            context["p"] = int(request.GET["p"])
+        if "o" in request.GET:
+            context["o"] = request.GET["o"]
+
+        q = context["q"] = request.GET["q"]
+
+        if context["p"] == 1:
+            data_query = Query(query=q, user_id=request.user.id)
+            data_query.save()
+
+        try:
+            offset = 10 * (context["p"] - 1)
+
+            es = Elasticsearch(hosts=settings.ELASTICSEARCH_HOSTS)
+            response = es.search(index="ddosdb", q=q, from_=offset, size=10, sort=context["o"])
+            context["time"] = time.time() - start
+
+            results = [x["_source"] for x in response["hits"]["hits"]]
+            context["amount"] = response["hits"]["total"]
+            context["pages"] = range(1, int(math.ceil(context["amount"] / 10)) + 1)
+
+#            for x in results:
+#                if "comments" in x:
+#                    context["comments"][x["key"]] = x.pop("comments", None)
+
+            def clean_result(x):
+                # Remove the start_timestamp attribute (if it exists)
+                x.pop("start_timestamp", None)
+
+#                for y in x["src_ips"]:
+#                    y.pop("as", None)
+#                    y.pop("cc", None)
+
+
+                return x
+
+            results = map(clean_result, results)
+            results = list(results)
+
+            if request.user.has_perm("ddosdb.view_blame"):
+                for result in results:
+                    try:
+                        result["blame"] = Blame.objects.get(key=result["key"]).to_dict()
+                    except ObjectDoesNotExist:
+                        pass
+
+            context["results"] = results
+        except (SyntaxError, RequestError) as e:
+            context["error"] = "Invalid query: " + str(e)
+
+    return HttpResponse(render(request, "ddosdb/query.html", context))
+
+@login_required()
+def queryJSON(request):
     start = time.time()
     context = {
         "results": [],

@@ -8,7 +8,7 @@ DEBUG = True
 
 
 # Which hosts are allowed
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 ADMINS = [("Your Name", "Your.Name@your.org")]
 
