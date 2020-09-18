@@ -25,9 +25,9 @@ services:
   ddosdb:
     build: .
     container_name: ddosdb
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:4000
     ports:
-      - 127.0.0.1:8000:8000
+      - 4000:4000
     volumes:
       - ddosdb-data:/app/storage
 
@@ -36,18 +36,18 @@ services:
     depends_on:
       - elasticsearch
         #    command: /app/ddosdb-docker.db
-    command: >
-      /bin/bash -c "
-        while ! curl elasticsearch:9200;
-
-        do
-          echo elasticsearch service probably not ready yet..;
-          sleep 1;
-        done;
-
-        echo elasticsearch ready, time to boostrap!;
-        /app/ddosdb-docker.db
-      "
+        #    command: >
+        #      /bin/bash -c "
+        #        while ! curl elasticsearch:9200;
+        #
+        #        do
+        #          echo elasticsearch service probably not ready yet..;
+        #          sleep 1;
+        #        done;
+        #
+        #        echo elasticsearch ready, time to boostrap!;
+        #        /app/ddosdb-docker.db
+        #      "
 
 volumes:
   elasticsearch-data:
