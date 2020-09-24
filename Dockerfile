@@ -7,7 +7,9 @@ RUN pip install django-sslserver\
                 demjson\
                 requests\
                 django-debug-toolbar\
-                psycopg2-binary
+                psycopg2-binary\
+                django-oauth-toolkit\
+                django-cors-middleware
     
 COPY ddosdb /app
 WORKDIR /app

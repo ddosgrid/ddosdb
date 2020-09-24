@@ -35,6 +35,7 @@ services:
     build: ./housekeeping
     depends_on:
       - elasticsearch
+    command: sleep 10000
         #    command: /app/ddosdb-docker.db
         #    command: >
         #      /bin/bash -c "

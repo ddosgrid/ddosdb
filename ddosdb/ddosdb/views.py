@@ -19,11 +19,15 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, NotFoundError
+
+from oauth2_provider.views.generic import ProtectedResourceView
+from oauth2_provider.decorators import protected_resource
 
 from ddosdb.enrichment.team_cymru import TeamCymru
 from ddosdb.models import Query, AccessRequest, Blame, FileUpload
@@ -196,7 +200,8 @@ def query(request):
 
             results = [x["_source"] for x in response["hits"]["hits"]]
             context["amount"] = response["hits"]["total"]
-            context["pages"] = range(1, int(math.ceil(context["amount"] / 10)) + 1)
+#            context["pages"] = range(1, int(math.ceil(context["amount"] / 10)) + 1)
+            context["pages"] = ""
 
 #            for x in results:
 #                if "comments" in x:
@@ -228,6 +233,93 @@ def query(request):
             context["error"] = "Invalid query: " + str(e)
 
     return HttpResponse(render(request, "ddosdb/query.html", context))
+
+
+@protected_resource()
+def profileInfo(request):
+    start = time.time()
+    context = {
+        "id": request.resource_owner.id,
+        "username": request.resource_owner.username,
+        "email": request.resource_owner.email,
+        "first_name": request.resource_owner.first_name,
+        "last_name": request.resource_owner.last_name,
+    }
+
+    print(context)
+    return JsonResponse(context)
+
+
+@protected_resource()
+def queryJSON_API(request):
+    start = time.time()
+    context = {
+        "results": [],
+        "comments": {},
+        "q": "",
+        "p": 1,
+        "o": "_score",
+        "pages": range(1, 1),
+        "amount": 0,
+        "error": "",
+        "time": 0
+    }
+
+    if "q" in request.GET:
+        if "p" in request.GET:
+            context["p"] = int(request.GET["p"])
+        if "o" in request.GET:
+            context["o"] = request.GET["o"]
+
+        q = context["q"] = request.GET["q"]
+
+        if context["p"] == 1:
+            data_query = Query(query=q, user_id=request.resource_owner.id)
+            data_query.save()
+
+        try:
+            offset = 10 * (context["p"] - 1)
+
+            es = Elasticsearch(hosts=settings.ELASTICSEARCH_HOSTS)
+            response = es.search(index="ddosdb", q=q, from_=offset, size=10, sort=context["o"])
+            context["time"] = time.time() - start
+
+            results = [x["_source"] for x in response["hits"]["hits"]]
+            context["amount"] = response["hits"]["total"]
+#            context["pages"] = range(1, int(math.ceil(context["amount"] / 10)) + 1)
+            context["pages"] = ""
+
+            #            for x in results:
+            #                if "comments" in x:
+            #                    context["comments"][x["key"]] = x.pop("comments", None)
+
+            def clean_result(x):
+                # Remove the start_timestamp attribute (if it exists)
+                x.pop("start_timestamp", None)
+
+                #                for y in x["src_ips"]:
+                #                    y.pop("as", None)
+                #                    y.pop("cc", None)
+
+
+                return x
+
+            results = map(clean_result, results)
+            results = list(results)
+
+            if request.resource_owner.has_perm("ddosdb.view_blame"):
+                for result in results:
+                    try:
+                        result["blame"] = Blame.objects.get(key=result["key"]).to_dict()
+                    except ObjectDoesNotExist:
+                        pass
+
+            context["results"] = results
+        except (SyntaxError, RequestError) as e:
+            context["error"] = "Invalid query: " + str(e)
+
+    print(context)
+    return JsonResponse(context)
 
 @login_required()
 def queryJSON(request):
@@ -697,3 +789,7 @@ def edit_comment(request):
 #        return redirect(url)
         time.sleep(1)
         return redirect("overview")
+
+class ApiEndpoint(ProtectedResourceView):
+    def get(self, request, *args, **kwargs):
+        return HttpResponse('Hello, OAuth2!')
