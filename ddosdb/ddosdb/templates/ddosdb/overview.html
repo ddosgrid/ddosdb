@@ -12,7 +12,7 @@
 <body class="bg-light">
 {% include 'ddosdb/menu.html' %}
   {% if q != "" %}
-    <h1 align="center" class="display-4 ddosdb-subtitle">Overview of some fingerprints ({{ results|length }}) - (<a href="{% url "overview" %}?q=&o={{ o }}&so={{ so }}&son={{ son }}">show all</a>)</h1>
+    <h1 align="center" class="display-4 ddosdb-subtitle">Overview of some fingerprints ({{ results|length }}) - (<a href="overview?q=&o={{ o }}&so={{ so }}&son={{ son }}">show all</a>)</h1>
   {% else %}
     <h1 align="center" class="display-4 ddosdb-subtitle">Overview of all fingerprints ({{ results|length }})</h1>
   {% endif %}
@@ -24,18 +24,18 @@
           <th nowrap="nowrap">
           {% if hdr == o %}
             <div title="change to {{ son }} sort order">
-            <a href="{% url "overview" %}?q={{ q }}&o={{ hdr }}&so={{ son }}&son={{ so }}">
-              <img width="16" height="16" src="{% static "ddosdb/img/" %}{{ so }}.png" alt="sort order is {{ so }}">
+            <a href="overview?q={{ q }}&o={{ hdr }}&so={{ son }}&son={{ so }}">
+              <img width="16" height="16" src="static/ddosdb/img/{{ so }}.png" alt="sort order is {{ so }}">
           {% else %}
             <div title="order by '{{name}}' ({{ so }})">
-            <a href="{% url "overview" %}?q={{ q }}&o={{ hdr }}&so={{ so }}&son={{ son }}">
-              <img width="16" height="16" src="{% static "ddosdb/img/empty_sort.png" %}">
+            <a href="overview?q={{ q }}&o={{ hdr }}&so={{ so }}&son={{ son }}">
+              <img width="16" height="16" src="static/ddosdb/img/empty_sort.png">
           {% endif %}
               {{ name }}
             </a>
           {% if hdr == "submitter" and q != "" %}
-            <a href="{% url "overview" %}?q=&o={{ o }}&so={{ so }}&son={{ son }}">
-              <img width="16" height="16" src="{% static "ddosdb/img/clear.png" %}">
+            <a href="overview?q=&o={{ o }}&so={{ so }}&son={{ son }}">
+              <img width="16" height="16" src="static/ddosdb/img/clear.png">
             </a>
           {% endif %}
         </div>
@@ -49,18 +49,18 @@
           {% for hdr,name in headers.items %}
           <td>
             {% if hdr == "multivector_key" %}
-              <a target="_blank" href="{% url "query" %}?q=multivector_key:{{ node|get_item:hdr|urlencode }}">
+              <a target="_blank" href="query?q=multivector_key:{{ node|get_item:hdr|urlencode }}">
                 {{node|get_item:hdr}}
               </a>
             {% elif hdr == "key" %}
               <div title="open detailed view in a new tab">
-                <a target="_blank" href="{% url "query" %}?q=key:{{ node|get_item:hdr|urlencode }}">
+                <a target="_blank" href="query?q=key:{{ node|get_item:hdr|urlencode }}">
                   {{node|get_item:hdr}}
                 </a>
               </div>
             {% elif hdr == "submitter" %}
               <div title="click to show only fingerprints submitted by user '{{node|get_item:hdr}}'">
-                <a href="{% url "overview" %}?q=submitter:{{ node|get_item:hdr|urlencode }}&o={{ o }}&so={{ so }}&son={{ son }}">
+                <a href="overview?q=submitter:{{ node|get_item:hdr|urlencode }}&o={{ o }}&so={{ so }}&son={{ son }}">
                   {{node|get_item:hdr}}
                 </a>
               </div>
@@ -82,8 +82,8 @@
                 {% if user.is_authenticated %}
                   {% if user.username == node|get_item:"submitter"  or user.is_superuser %}
                   <span style="float:right;">
-                    &nbsp;(<a href="{% url "edit-comment" %}?key={{node|get_item:"key"}}">
-                      <img width="16" height="16" src="{% static "ddosdb/img/pencil.png" %}">
+                    &nbsp;(<a href="edit-comment?key={{node|get_item:"key"}}">
+                      <img width="16" height="16" src="static/ddosdb/img/pencil.png">
                     </a>)
                   </span>
                   {% endif %}

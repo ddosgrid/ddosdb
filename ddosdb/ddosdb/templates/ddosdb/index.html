@@ -11,11 +11,11 @@
         </div>
 
         <div class="container my-5" align="center">
-            <a class="btn btn-lg btn-secondary" target="_blank" href="{% url "overview" %}">Overview</a>
+            <a class="btn btn-lg btn-secondary" target="_blank" href="overview">Overview</a>
             &nbsp;&nbsp;&nbsp;&nbsp;
             OR
             &nbsp;&nbsp;&nbsp;&nbsp;
-            <a class="btn btn-lg btn-secondary" target="_blank" href="{% url "query" %}?q=*">Search</a>
+            <a class="btn btn-lg btn-secondary" target="_blank" href="query?q=">Search</a>
         </div>
 
           {% comment %}
@@ -32,7 +32,7 @@
 <div class="container my-5">
     <div class="row">
         <div class="col-sm-12 col-md-5 col-lg-4">
-            <img src="{% static "ddosdb/img/illustration.svg" %}" class="img-fluid w-100 p-3">
+            <img src="static/ddosdb/img/illustration.svg" class="img-fluid w-100 p-3">
         </div>
         <div class="col-sm-12 col-md-7 col-lg-8 mt-sm-4">
             <h1 class="display-4 ddosdb-subtitle">What is DDoSDB?</h1>
@@ -56,7 +56,7 @@
     <div class="container my-5">
         <h1 class="display-4 ddosdb-title">Search for attacks</h1>
         <p class="lead">Take advantage of the best public DDoS attack database for improving your defence strategies.</p>
-        <a class="btn btn-lg btn-secondary" href="{% url "request-access" %}">Request access</a>
+        <a class="btn btn-lg btn-secondary" href="request-access">Request access</a>
     </div>
 </div>
 

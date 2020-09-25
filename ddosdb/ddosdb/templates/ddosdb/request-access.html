@@ -14,7 +14,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <form class="needs-validation" method="post" action="{% url "request-access" %}">
+            <form class="needs-validation" method="post" action="{% "request-access" %}">
                 {% if error %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% elif success %}

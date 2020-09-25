@@ -8,12 +8,12 @@
 <body class="bg-light">
 <div class="pb-3 box-shadow pt-3 border-bottom bg-white">
     <div class="container d-flex flex-column flex-md-row align-items-center">
-        <a class="mr-md-auto" href="{% url "index" %}">
-            <img style="height: 40px" src="{% static "ddosdb/img/logo-new.svg" %}">
+        <a class="mr-md-auto" href="index">
+            <img style="height: 40px" src="static/ddosdb/img/logo-new.svg">
         </a>
         <nav class="ml-md-auto my-2 my-md-0 mr-md-3 d-block text-nowrap">
-            <a class="p-2 text-dark" href="{% url "account" %}">Account</a>
-            <a class="p-2 text-dark" href="{% url 'logout' %}">Log out ({{ request.user.username }})</a>
+            <a class="p-2 text-dark" href="account">Account</a>
+            <a class="p-2 text-dark" href="logout">Log out ({{ request.user.username }})</a>
         </nav>
     </div>
 </div>
@@ -39,10 +39,10 @@
     <div class="row mt-1">
         <div class="col-12">
             {% if p > 1 %}
-                <a class="btn btn-dark" href="{% url "query" %}?q={{ q|urlencode }}&p={{ p|add:-1 }}">Previous page</a>
+                <a class="btn btn-dark" href="{% "query" %}?q={{ q|urlencode }}&p={{ p|add:-1 }}">Previous page</a>
             {% endif %}
             {% if p|multiply:10 < amount %}
-                <a class="btn btn-dark" href="{% url "query" %}?q={{ q|urlencode }}&p={{ p|add:1 }}">Next page</a>
+                <a class="btn btn-dark" href="{% "query" %}?q={{ q|urlencode }}&p={{ p|add:1 }}">Next page</a>
             {% endif %}
         </div>
     </div>
