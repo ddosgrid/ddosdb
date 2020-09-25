@@ -17,11 +17,18 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.urls import include, path
+from django.conf.urls.static import static
+from django.conf.urls import include, url
+
+#urlpatterns = [
+#    path('', include('ddosdb.urls')),
+#    path('admin/', admin.site.urls),
+#]
 
 urlpatterns = [
-    path('', include('ddosdb.urls')),
-    path('admin/', admin.site.urls),
-]
+    url(r'^admin/', admin.site.urls),
+    url(r'^', include('ddosdb.urls')),
+] + static(settings.STATIC_SUFFIX, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
     import debug_toolbar

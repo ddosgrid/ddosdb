@@ -60,10 +60,12 @@ OAUTH2_PROVIDER = {
   'ACCESS_TOKEN_EXPIRE_SECONDS': 3.154e+7
 }
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ STATIC_ROOT],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,9 +116,18 @@ USE_L10N = True
 USE_TZ = True
 
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
 
-LOGIN_URL = '/login'
+
+USE_X_FORWARDED_HOST = True
+FORCE_SCRIPT_NAME = '/ddosgrid/ddosdb/'
+STATIC_SUFFIX = '/static/'
+STATIC_URL = FORCE_SCRIPT_NAME + STATIC_SUFFIX
+MEDIA_SUFFIX = '/media/'
+MEDIA_URL = FORCE_SCRIPT_NAME + MEDIA_SUFFIX
+
+LOGIN_URL = FORCE_SCRIPT_NAME + '/login'
