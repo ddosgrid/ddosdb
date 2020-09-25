@@ -5,7 +5,7 @@
 <body class="bg-light text-center">
 <form class="py-5 mx-auto" style="width: 400px; max-width: 93vw" method="post" action="">
     {% csrf_token %}
-    <img class="mb-4 logo" src="{% static "ddosdb/img/logo.svg" %}" alt="" width="400" height="150">
+    <img class="mb-4 logo" src="static/ddosdb/img/logo.svg" alt="" width="400" height="150">
     {% if failed %}
         <div class="alert alert-danger">
             Invalid password
@@ -18,7 +18,7 @@
         <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
     </div>
     <button class="btn btn-lg btn-secondary btn-block" type="submit">Sign in</button>
-        <br><a href="{% url "index" %}" class="text-dark pt-3"><i class="fa fa-arrow-left"></i> Back home</a>
+        <br><a href="index" class="text-dark pt-3"><i class="fa fa-arrow-left"></i> Back home</a>
 </form>
 <input type="hidden" name="next" value="{{ next }}" />
 </body>
