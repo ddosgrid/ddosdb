@@ -1,5 +1,5 @@
 import django.contrib.auth.views
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -19,4 +19,9 @@ urlpatterns = [
     path('overview', views.overview, name='overview'),
     path('my-permissions', views.my_permissions, name='my-permissions'),
     path('edit-comment', views.edit_comment, name='edit-comment'),
+
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    path('api/query', views.queryJSON_API, name='query'),
+    path('api/profileinfo', views.profileInfo, name='profileinfo'),
+    path('api/hello', views.ApiEndpoint.as_view(), name='apiendpoint'),
 ]

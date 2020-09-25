@@ -32,7 +32,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize'
+    'django.contrib.humanize',
+    'oauth2_provider',
+    'corsheaders'
 ]
 
 
@@ -41,12 +43,22 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'website.urls'
+
+OAUTH2_PROVIDER = {
+  'SCOPES': {
+     'read': 'Read scope',
+     'profile': 'Profile scope'
+  },
+  # OAuth2 Access token valid for one year
+  'ACCESS_TOKEN_EXPIRE_SECONDS': 3.154e+7
+}
 
 TEMPLATES = [
     {
