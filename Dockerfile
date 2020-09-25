@@ -13,6 +13,6 @@ RUN pip install django-sslserver\
     
 COPY ddosdb /app
 WORKDIR /app
-RUN mv /app/website/settings_local_docker.example.py /app/website/settings_local.py; python manage.py migrate
+RUN mv /app/website/settings_local_docker.example.py /app/website/settings_local.py; python manage.py migrate; python manage.py collectstatic
 EXPOSE 8000
 CMD ["python" , "manage.py", "runserver", "--settings=website.settings-dev"]
