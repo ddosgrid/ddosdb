@@ -1,0 +1,39 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+{% include 'ddosdb/header.html' %}
+<body class="bg-light">
+<form class="py-5 mx-auto" style="width: 400px; max-width: 93vw" method="post" action="">
+    {% csrf_token %}
+    <img class="mb-5 logo" src="{% static "ddosdb/img/logo.svg" %}" alt="" width="400" height="150">
+	<h3 class="block-center-heading">Authorize {{ application.name }}?</h3>
+	{% csrf_token %}
+
+	{% for field in form %}
+	    {% if field.is_hidden %}
+		{{ field }}
+	    {% endif %}
+	{% endfor %}
+
+	<p>Application requires following permissions</p>
+	<ul class="mb-5">
+		<li>Greetings</li>
+	    {% for scope in scopes_descriptions %}
+		<li>{{ scope }}</li>
+	    {% endfor %}
+	</ul>
+
+	{{ form.errors }}
+	{{ form.non_field_errors }}
+
+	<div class="control-group">
+	    <div class="controls">
+		<input type="submit" class="btn btn-large btn-secondary btn-block" name="allow" value="Authorize"/>
+		<input type="submit" class="btn btn-large btn-secondary btn-block" value="Cancel" style="background-color: #aab7c2; border-color: #afc0cf;"/>
+	    </div>
+	</div>
+</form>
+</body>
+</html>
+
