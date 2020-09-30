@@ -21,7 +21,7 @@ urlpatterns = [
     path('edit-comment', views.edit_comment, name='edit-comment'),
 
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    path('api/query', views.queryJSON_API, name='query'),
+#    path('api/query', views.queryJSON_API, name='query'),
     path('api/profileinfo', views.profileInfo, name='profileinfo'),
     path('api/hello', views.ApiEndpoint.as_view(), name='apiendpoint'),
 ]

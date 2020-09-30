@@ -61,7 +61,8 @@
                             {% if node.key %}
                                 <a href="{% url "fingerprint" node.key %}" class="text-dark">Fingerprint</a> -
                                 <a href="{% url "attack-trace" node.key %}" class="text-dark">Attack trace</a>
-                                <label class="float-right"><input type="checkbox" name="key" value="{{ node.key }}"> Compare</label>
+				<a href="https://www.csg.uzh.ch/ddosgrid/datasets?import={{node.key}}" target="_blank" class="text-dark float-right"><img src="{% static 'ddosdb/img/ddosgridlogo.svg' %} ">Visualize</a>
+                                <label class="float-right"><input type="checkbox" name="key" value="{{ node.key }}">Compare -</label>
                             {% endif %}
 
                         </div>
