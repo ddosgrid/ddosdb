@@ -20,6 +20,7 @@ from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.http import HttpResponse
 from django.http import JsonResponse
+from django.http import FileResponse
 from django.shortcuts import render, redirect, reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -511,9 +512,10 @@ def attack_trace(request, key):
             break
 
     if file != "":
-        response = HttpResponse(content_type="application/octet-stream")
-        response["X-Sendfile"] = settings.RAW_PATH + file
-        response["Content-Disposition"] = "attachment; filename=" + file
+        response = FileResponse(open(settings.RAW_PATH + file, 'rb'))
+#        response = HttpResponse(content_type="application/octet-stream")
+#        response["X-Sendfile"] = settings.RAW_PATH + file
+#        response["Content-Disposition"] = "attachment; filename=" + file
         return response
     else:
         return HttpResponse("File not found")
