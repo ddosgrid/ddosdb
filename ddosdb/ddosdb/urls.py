@@ -23,5 +23,6 @@ urlpatterns = [
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 #    path('api/query', views.queryJSON_API, name='query'),
     path('api/profileinfo', views.profileInfo, name='profileinfo'),
+    path('api/attack-trace/<key>', views.attack_trace_api, name='trace_api'),
     path('api/hello', views.ApiEndpoint.as_view(), name='apiendpoint'),
 ]

@@ -451,6 +451,24 @@ def attack_trace(request, key):
     else:
         return HttpResponse("File not found")
 
+@protected_resource()
+def attack_trace_api(request, key):
+    file = ""
+    for file_path in os.listdir(settings.RAW_PATH):
+        filename, file_extension = os.path.splitext(file_path)
+        if filename == key and not file_extension == ".json":
+            file = file_path
+            break
+
+    if file != "":
+        response = FileResponse(open(settings.RAW_PATH + file, 'rb'))
+#        response = HttpResponse(content_type="application/octet-stream")
+#        response["X-Sendfile"] = settings.RAW_PATH + file
+#        response["Content-Disposition"] = "attachment; filename=" + file
+        return response
+    else:
+        return HttpResponse("File not found")
+
 
 @csrf_exempt
 def upload_file(request):
