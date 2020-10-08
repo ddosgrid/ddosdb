@@ -48,6 +48,8 @@
             {% for node in results %}
                 <div class="col-lg-6 col-md-12 my-2">
                     <div class="card">
+                      <div class="hashicon-wrapper" data-hash="{{node.key}}" style="position: absolute; top: 20px; right: 20px; height: 30px; width: 30px;">
+                        </div>
                         <div class="card-body json-block" id="result-{{ forloop.counter0 }}">
                             {% include "ddosdb/json-tree.html" %}
                         </div>
@@ -103,5 +105,7 @@
     </div>
 </div>
 {% include "ddosdb/footer.html" %}
+<script src="{% static 'ddosdb/js/hashicon.umd.js' %}"></script>
+<script src="{% static 'ddosdb/js/generateHashIcons.js' %}"></script>
 </body>
 </html>
