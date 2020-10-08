@@ -34,8 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'oauth2_provider',
-    'corsheaders',
-    'rest_framework'
+    'corsheaders'
 ]
 
 
@@ -133,12 +132,3 @@ MEDIA_URL = FORCE_SCRIPT_NAME + MEDIA_SUFFIX
 
 LOGIN_URL = FORCE_SCRIPT_NAME + '/login'
 
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    )
-}
