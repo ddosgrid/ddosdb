@@ -470,11 +470,11 @@ def attack_trace_api(request, key):
     else:
         return HttpResponse("File not found")
 
+
 @protected_resource()
 @csrf_exempt
 def upload_api(request):
     if request.method == "POST":
-
         username = request.resource_owner.username
         filename = request.META["HTTP_X_FILENAME"]
 
@@ -485,126 +485,14 @@ def upload_api(request):
         acc_tk = AccessToken.objects.get(token=app_tk)
         user = acc_tk.user
 
-        if user is None or not user.has_perm("ddosdb.upload_fingerprint"):
-            response = HttpResponse()
-            response.status_code = 403
-            response.reason_phrase = "Invalid credentials or no permission to upload fingerprints"
-            return response
-
-        try:
-            os.remove(settings.RAW_PATH + filename + ".json")
-            os.remove(settings.RAW_PATH + filename + ".pcap")
-        except IOError:
-            pass
-
-        # JSON enrichment
-        json_content = request.FILES["json"].read()
-        data = demjson.decode(json_content)
-        # Add key if not exists
-        if "key" not in data:
-            data["key"] = filename
-
-        if "dst_ports" in data:
-            data["dst_ports"] = [x for x in data["dst_ports"] if not math.isnan(x)]
-        if "src_ports" in data:
-            data["src_ports"] = [x for x in data["src_ports"] if not math.isnan(x)]
-
-        # Enrich it all a bit
-        data["amplifiers_size"] = 0
-        data["attackers_size"] = 0
-
-        if "src_ips" in data:
-            data["src_ips_size"] = len(data["src_ips"])
-
-        if "amplifiers" in data:
-            data["amplifiers_size"] = len(data["amplifiers"])
-
-        if "attackers" in data:
-            data["attackers_size"] = len(data["attackers"])
-
-        data["ips_involved"] = data["amplifiers_size"] + data["attackers_size"]
-
-#        data["comment"] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-        data["comment"] = ""
-
-        # add username of submitter as well.
-        # Probably best to have an optional separate field for contact information
-        data["submitter"] = username
-
-        # Add the timestamp it was submitted as well.
-        # Usefull for ordering in overview page.
-
-        data["submit_timestamp"] = datetime.utcnow()
-
-#        else:
-#            if "amplifiers" in data:
-#                data["src_ips"]      = data["amplifiers"]
-#                data["src_ips_size"] = len(data["src_ips"])
-#            else:
-#                data["src_ips"]      = []
-#                data["src_ips_size"] = 0
-
-
-        # Bear in mind that the data format may change. Hence the order of these steps is important.
-        # Enrich with ASN
-        # data = (TeamCymru(data)).parse()
-        print("Enrichment with AS # disabled")
-        # Enrich with something
-        # data = (Something(data)).parse()
-
-
-        # JSON upload
-        demjson.encode_to_file(settings.RAW_PATH + filename + ".json", data)
-
-        # JSON database insert
-        es = Elasticsearch(hosts=settings.ELASTICSEARCH_HOSTS)
-
-        try:
-            es.delete(index="ddosdb", doc_type="_doc", id=filename, request_timeout=500)
-        except NotFoundError:
-            pass
-        except:
-            print("Could not setup a connection to Elasticsearch")
-            response = HttpResponse()
-            response.status_code = 503
-            response.reason_phrase = "Database unavailable"
-            return response
-
-        try:
-            es.index(index="ddosdb", doc_type="_doc", id=filename, body=data, request_timeout=500)
-        except RequestError as e:
-            response = HttpResponse()
-            response.status_code = 400
-            response.reason_phrase = str(e)
-            return response
-
-        # PCAP upload
-        pcap_fp = open(settings.RAW_PATH + filename + ".pcap", "wb+")
-        pcap_file = request.FILES["pcap"]
-        for chunk in pcap_file.chunks():
-            pcap_fp.write(chunk)
-
-        pcap_fp.close()
-
-        # Register record
-        file_upload = FileUpload()
-        file_upload.user = user
-        file_upload.filename = filename
-        file_upload.save()
-
-        response = HttpResponse()
-        response.status_code = 201
-        return response
-
+        return index_uploaded_files(request, user, filename)
     else:
         response = HttpResponse()
         response.status_code = 405
         return response
 
-
 @csrf_exempt
 def upload_file(request):
-
     if request.method == "POST":
         if not all (k in request.META for k in ("HTTP_X_USERNAME","HTTP_X_PASSWORD","HTTP_X_FILENAME")):
             response = HttpResponse()
@@ -619,56 +507,64 @@ def upload_file(request):
 
         print("user:{} - filename:{}".format(username, filename))
 
-        if user is None or not user.has_perm("ddosdb.upload_fingerprint"):
-            response = HttpResponse()
-            response.status_code = 403
-            response.reason_phrase = "Invalid credentials or no permission to upload fingerprints"
-            return response
+        return index_uploaded_files(request, user, filename)
 
-        try:
-            os.remove(settings.RAW_PATH + filename + ".json")
-            os.remove(settings.RAW_PATH + filename + ".pcap")
-        except IOError:
-            pass
+    else:
+        response = HttpResponse()
+        response.status_code = 405
+        return response
 
-        # JSON enrichment
-        json_content = request.FILES["json"].read()
-        data = demjson.decode(json_content)
-        # Add key if not exists
-        if "key" not in data:
-            data["key"] = filename
+def index_uploaded_files(request, user, filename):
+    if user is None or not user.has_perm("ddosdb.upload_fingerprint"):
+        response = HttpResponse()
+        response.status_code = 403
+        response.reason_phrase = "Invalid credentials or no permission to upload fingerprints"
+        return response
 
-        if "dst_ports" in data:
-            data["dst_ports"] = [x for x in data["dst_ports"] if not math.isnan(x)]
-        if "src_ports" in data:
-            data["src_ports"] = [x for x in data["src_ports"] if not math.isnan(x)]
+    try:
+        os.remove(settings.RAW_PATH + filename + ".json")
+        os.remove(settings.RAW_PATH + filename + ".pcap")
+    except IOError:
+        pass
 
-        # Enrich it all a bit
-        data["amplifiers_size"] = 0
-        data["attackers_size"] = 0
+    # JSON enrichment
+    json_content = request.FILES["json"].read()
+    data = demjson.decode(json_content)
+    # Add key if not exists
+    if "key" not in data:
+        data["key"] = filename
 
-        if "src_ips" in data:
-            data["src_ips_size"] = len(data["src_ips"])
+    if "dst_ports" in data:
+        data["dst_ports"] = [x for x in data["dst_ports"] if not math.isnan(x)]
+    if "src_ports" in data:
+        data["src_ports"] = [x for x in data["src_ports"] if not math.isnan(x)]
 
-        if "amplifiers" in data:
-            data["amplifiers_size"] = len(data["amplifiers"])
+    # Enrich it all a bit
+    data["amplifiers_size"] = 0
+    data["attackers_size"] = 0
 
-        if "attackers" in data:
-            data["attackers_size"] = len(data["attackers"])
+    if "src_ips" in data:
+        data["src_ips_size"] = len(data["src_ips"])
 
-        data["ips_involved"] = data["amplifiers_size"] + data["attackers_size"]
+    if "amplifiers" in data:
+        data["amplifiers_size"] = len(data["amplifiers"])
+
+    if "attackers" in data:
+        data["attackers_size"] = len(data["attackers"])
+
+    data["ips_involved"] = data["amplifiers_size"] + data["attackers_size"]
 
 #        data["comment"] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-        data["comment"] = ""
+    data["comment"] = ""
 
-        # add username of submitter as well.
-        # Probably best to have an optional separate field for contact information
-        data["submitter"] = username
+    # add username of submitter as well.
+    # Probably best to have an optional separate field for contact information
+    data["submitter"] = user.username
 
-        # Add the timestamp it was submitted as well.
-        # Usefull for ordering in overview page.
+    # Add the timestamp it was submitted as well.
+    # Usefull for ordering in overview page.
 
-        data["submit_timestamp"] = datetime.utcnow()
+    data["submit_timestamp"] = datetime.utcnow()
 
 #        else:
 #            if "amplifiers" in data:
@@ -679,61 +575,61 @@ def upload_file(request):
 #                data["src_ips_size"] = 0
 
 
-        # Bear in mind that the data format may change. Hence the order of these steps is important.
-        # Enrich with ASN
-        # data = (TeamCymru(data)).parse()
-        print("Enrichment with AS # disabled")
-        # Enrich with something
-        # data = (Something(data)).parse()
+    # Bear in mind that the data format may change. Hence the order of these steps is important.
+    # Enrich with ASN
+    # data = (TeamCymru(data)).parse()
+    print("Enrichment with AS # disabled")
+    # Enrich with something
+    # data = (Something(data)).parse()
 
 
-        # JSON upload
-        demjson.encode_to_file(settings.RAW_PATH + filename + ".json", data)
+    # JSON upload
+    demjson.encode_to_file(settings.RAW_PATH + filename + ".json", data)
 
-        # JSON database insert
-        es = Elasticsearch(hosts=settings.ELASTICSEARCH_HOSTS)
+    # JSON database insert
+    es = Elasticsearch(hosts=settings.ELASTICSEARCH_HOSTS)
 
-        try:
-            es.delete(index="ddosdb", doc_type="_doc", id=filename, request_timeout=500)
-        except NotFoundError:
-            pass
-        except:
-            print("Could not setup a connection to Elasticsearch")
-            response = HttpResponse()
-            response.status_code = 503
-            response.reason_phrase = "Database unavailable"
-            return response
-
-        try:
-            es.index(index="ddosdb", doc_type="_doc", id=filename, body=data, request_timeout=500)
-        except RequestError as e:
-            response = HttpResponse()
-            response.status_code = 400
-            response.reason_phrase = str(e)
-            return response
-
-        # PCAP upload
-        pcap_fp = open(settings.RAW_PATH + filename + ".pcap", "wb+")
-        pcap_file = request.FILES["pcap"]
-        for chunk in pcap_file.chunks():
-            pcap_fp.write(chunk)
-
-        pcap_fp.close()
-
-        # Register record
-        file_upload = FileUpload()
-        file_upload.user = user
-        file_upload.filename = filename
-        file_upload.save()
-
+    try:
+        es.delete(index="ddosdb", doc_type="_doc", id=filename, request_timeout=500)
+    except NotFoundError:
+        pass
+    except:
+        print("Could not setup a connection to Elasticsearch")
         response = HttpResponse()
-        response.status_code = 201
+        response.status_code = 503
+        response.reason_phrase = "Database unavailable"
         return response
 
-    else:
+    try:
+        es.index(index="ddosdb", doc_type="_doc", id=filename, body=data, request_timeout=500)
+    except RequestError as e:
         response = HttpResponse()
-        response.status_code = 405
+        response.status_code = 400
+        response.reason_phrase = str(e)
         return response
+
+    # PCAP upload
+    pcap_fp = open(settings.RAW_PATH + filename + ".pcap", "wb+")
+    pcap_file = request.FILES["pcap"]
+    for chunk in pcap_file.chunks():
+        pcap_fp.write(chunk)
+
+    pcap_fp.close()
+
+    # Register record
+    file_upload = FileUpload()
+    file_upload.user = user
+    file_upload.filename = filename
+    file_upload.save()
+
+    response = HttpResponse()
+    response.status_code = 201
+    return response
+
+
+
+
+
 
 
 
