@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 import pprint
 import pandas as pd
 import numpy as np
+import re
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -23,12 +24,12 @@ from django.http import JsonResponse
 from django.http import FileResponse
 from django.shortcuts import render, redirect, reverse
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, NotFoundError
 
 from oauth2_provider.views.generic import ProtectedResourceView
 from oauth2_provider.decorators import protected_resource
+from oauth2_provider.models import AccessToken
 
 from ddosdb.enrichment.team_cymru import TeamCymru
 from ddosdb.models import Query, AccessRequest, Blame, FileUpload
@@ -537,6 +538,137 @@ def attack_trace_api(request, key):
         return response
     else:
         return HttpResponse("File not found")
+
+@protected_resource()
+@csrf_exempt
+def upload_api(request):
+    if request.method == "POST":
+
+        username = request.resource_owner.username
+        filename = request.META["HTTP_X_FILENAME"]
+
+        print("user:{} - filename:{}".format(username, filename))
+        app_tk = request.META["HTTP_AUTHORIZATION"]
+        m = re.search('(Bearer)(\s)(.*)', app_tk)
+        app_tk = m.group(3)
+        acc_tk = AccessToken.objects.get(token=app_tk)
+        user = acc_tk.user
+
+        if user is None or not user.has_perm("ddosdb.upload_fingerprint"):
+            response = HttpResponse()
+            response.status_code = 403
+            response.reason_phrase = "Invalid credentials or no permission to upload fingerprints"
+            return response
+
+        try:
+            os.remove(settings.RAW_PATH + filename + ".json")
+            os.remove(settings.RAW_PATH + filename + ".pcap")
+        except IOError:
+            pass
+
+        # JSON enrichment
+        json_content = request.FILES["json"].read()
+        data = demjson.decode(json_content)
+        # Add key if not exists
+        if "key" not in data:
+            data["key"] = filename
+
+        if "dst_ports" in data:
+            data["dst_ports"] = [x for x in data["dst_ports"] if not math.isnan(x)]
+        if "src_ports" in data:
+            data["src_ports"] = [x for x in data["src_ports"] if not math.isnan(x)]
+
+        # Enrich it all a bit
+        data["amplifiers_size"] = 0
+        data["attackers_size"] = 0
+
+        if "src_ips" in data:
+            data["src_ips_size"] = len(data["src_ips"])
+
+        if "amplifiers" in data:
+            data["amplifiers_size"] = len(data["amplifiers"])
+
+        if "attackers" in data:
+            data["attackers_size"] = len(data["attackers"])
+
+        data["ips_involved"] = data["amplifiers_size"] + data["attackers_size"]
+
+#        data["comment"] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+        data["comment"] = ""
+
+        # add username of submitter as well.
+        # Probably best to have an optional separate field for contact information
+        data["submitter"] = username
+
+        # Add the timestamp it was submitted as well.
+        # Usefull for ordering in overview page.
+
+        data["submit_timestamp"] = datetime.utcnow()
+
+#        else:
+#            if "amplifiers" in data:
+#                data["src_ips"]      = data["amplifiers"]
+#                data["src_ips_size"] = len(data["src_ips"])
+#            else:
+#                data["src_ips"]      = []
+#                data["src_ips_size"] = 0
+
+
+        # Bear in mind that the data format may change. Hence the order of these steps is important.
+        # Enrich with ASN
+        # data = (TeamCymru(data)).parse()
+        print("Enrichment with AS # disabled")
+        # Enrich with something
+        # data = (Something(data)).parse()
+
+
+        # JSON upload
+        demjson.encode_to_file(settings.RAW_PATH + filename + ".json", data)
+
+        # JSON database insert
+        es = Elasticsearch(hosts=settings.ELASTICSEARCH_HOSTS)
+
+        try:
+            es.delete(index="ddosdb", doc_type="_doc", id=filename, request_timeout=500)
+        except NotFoundError:
+            pass
+        except:
+            print("Could not setup a connection to Elasticsearch")
+            response = HttpResponse()
+            response.status_code = 503
+            response.reason_phrase = "Database unavailable"
+            return response
+
+        try:
+            es.index(index="ddosdb", doc_type="_doc", id=filename, body=data, request_timeout=500)
+        except RequestError as e:
+            response = HttpResponse()
+            response.status_code = 400
+            response.reason_phrase = str(e)
+            return response
+
+        # PCAP upload
+        pcap_fp = open(settings.RAW_PATH + filename + ".pcap", "wb+")
+        pcap_file = request.FILES["pcap"]
+        for chunk in pcap_file.chunks():
+            pcap_fp.write(chunk)
+
+        pcap_fp.close()
+
+        # Register record
+        file_upload = FileUpload()
+        file_upload.user = user
+        file_upload.filename = filename
+        file_upload.save()
+
+        response = HttpResponse()
+        response.status_code = 201
+        return response
+
+    else:
+        response = HttpResponse()
+        response.status_code = 405
+        return response
 
 
 @csrf_exempt
