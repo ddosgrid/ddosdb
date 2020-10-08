@@ -49,12 +49,14 @@
           {% for hdr,name in headers.items %}
           <td>
             {% if hdr == "multivector_key" %}
-              <a target="_blank" href="{% url "query" %}?q=multivector_key:{{ node|get_item:hdr|urlencode }}">
+              <a target="_blank" href="{% url "query" %}?q=multivector_key:{{ node|get_item:hdr|urlencode }}" style="whitespace: nowrap">
+                <span class="hashicon-wrapper-small" data-hash="{{node.key}}" style="display: inline-block; height: 1em;"></span>
                 {{node|get_item:hdr}}
               </a>
             {% elif hdr == "key" %}
-              <div title="open detailed view in a new tab">
+              <div title="open detailed view in a new tab" style="white-space: nowrap">
                 <a target="_blank" href="{% url "query" %}?q=key:{{ node|get_item:hdr|urlencode }}">
+                  <span class="hashicon-wrapper-small" data-hash="{{node.key}}" style="display: inline-block; height: 1em;"></span>
                   {{node|get_item:hdr}}
                 </a>
               </div>
@@ -103,5 +105,7 @@
 <div class="col-sm-12">
   {% include "ddosdb/footer.html" %}
 </div>
+<script src="{% static 'ddosdb/js/hashicon.umd.js' %}"></script>
+<script src="{% static 'ddosdb/js/generateHashIcons.js' %}"></script>
 </body>
 </html>
