@@ -470,6 +470,12 @@ def attack_trace_api(request, key):
     else:
         return HttpResponse("File not found")
 
+def extract_user_info_from_authtoken(request):
+    app_tk = request.META["HTTP_AUTHORIZATION"]
+    m = re.search('(Bearer)(\s)(.*)', app_tk)
+    app_tk = m.group(3)
+    acc_tk = AccessToken.objects.get(token=app_tk)
+    return acc_tk.user
 
 @protected_resource()
 @csrf_exempt
@@ -479,11 +485,7 @@ def upload_api(request):
         filename = request.META["HTTP_X_FILENAME"]
 
         print("user:{} - filename:{}".format(username, filename))
-        app_tk = request.META["HTTP_AUTHORIZATION"]
-        m = re.search('(Bearer)(\s)(.*)', app_tk)
-        app_tk = m.group(3)
-        acc_tk = AccessToken.objects.get(token=app_tk)
-        user = acc_tk.user
+        user = extract_user_info_from_authtoken(request)
 
         return index_uploaded_files(request, user, filename)
     else:
