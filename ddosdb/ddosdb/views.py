@@ -879,7 +879,3 @@ def edit_comment(request):
 #        return redirect(url)
         time.sleep(1)
         return redirect("overview")
-
-class ApiEndpoint(ProtectedResourceView):
-    def get(self, request, *args, **kwargs):
-        return HttpResponse('Hello, OAuth2!')
