@@ -239,16 +239,15 @@ def query(request):
 
 @protected_resource()
 def profileInfo(request):
-    start = time.time()
+    user = extract_user_info_from_authtoken(request)
     context = {
         "id": request.resource_owner.id,
         "username": request.resource_owner.username,
         "email": request.resource_owner.email,
-        "first_name": request.resource_owner.first_name,
-        "last_name": request.resource_owner.last_name,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
     }
 
-    print(context)
     return JsonResponse(context)
 
 
@@ -457,7 +456,25 @@ def attack_trace_api(request, key):
     file = ""
     for file_path in os.listdir(settings.RAW_PATH):
         filename, file_extension = os.path.splitext(file_path)
-        if filename == key and not file_extension == ".json":
+        if filename == key and file_extension == ".pcap":
+            file = file_path
+            break
+
+    if file != "":
+        response = FileResponse(open(settings.RAW_PATH + file, 'rb'))
+#        response = HttpResponse(content_type="application/octet-stream")
+#        response["X-Sendfile"] = settings.RAW_PATH + file
+#        response["Content-Disposition"] = "attachment; filename=" + file
+        return response
+    else:
+        return HttpResponse("File not found")
+
+@login_required()
+def filter_rules(request, key):
+    file = ""
+    for file_path in os.listdir(settings.RAW_PATH):
+        filename, file_extension = os.path.splitext(file_path)
+        if filename == key and file_extension == ".iptables":
             file = file_path
             break
 
@@ -492,6 +509,29 @@ def upload_api(request):
         response = HttpResponse()
         response.status_code = 405
         return response
+
+@protected_resource()
+@csrf_exempt
+def upload_filter_rules(request):
+    iptables_script_supplied = "iptables" in request.FILES
+    filename_defined = "HTTP_X_FILENAME" in request.META
+    if request.method == "POST" and iptables_script_supplied and filename_defined:
+        # optional iptables upload
+        filename = request.META["HTTP_X_FILENAME"]
+        iptables_fp = open(settings.RAW_PATH + filename + ".iptables", "wb+")
+        iptables_file = request.FILES["iptables"]
+        for chunk in iptables_file.chunks():
+            iptables_fp.write(chunk)
+
+        iptables_fp.close()
+        response = HttpResponse()
+        response.status_code = 201
+        return response
+    else:
+        response = HttpResponse()
+        response.status_code = 405
+        return response
+
 
 @csrf_exempt
 def upload_file(request):
