@@ -15,6 +15,7 @@ urlpatterns = [
     path('compare', views.compare, name='compare'),
     path('fingerprint/<key>', views.fingerprint, name='fingerprint'),
     path('attack-trace/<key>', views.attack_trace, name='attack-trace'),
+    path('filter-rules/<key>', views.filter_rules, name='filter-rules'),
     path('upload-file', views.upload_file, name='upload-file'),
     path('overview', views.overview, name='overview'),
     path('my-permissions', views.my_permissions, name='my-permissions'),
@@ -26,4 +27,5 @@ urlpatterns = [
     path('api/attack-trace/<key>', views.attack_trace_api, name='trace_api'),
     path('api/hello', views.ApiEndpoint),
     path('api/upload-file', views.upload_api),
+    path('api/upload-filter_rules', views.upload_filter_rules),
 ]
