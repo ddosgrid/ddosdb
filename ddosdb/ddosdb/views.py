@@ -425,10 +425,11 @@ def compare(request):
 def fingerprint(request, key):
     file = settings.RAW_PATH + key + ".json"
     if os.path.isfile(file):
-        response = HttpResponse(content_type="application/json")
-        response["X-Sendfile"] = file
-        response["Content-Disposition"] = "attachment; filename=" + key + ".json"
-        return response
+        #response = HttpResponse(content_type="application/json")
+        #response["X-Sendfile"] = file
+        #response["Content-Disposition"] = "attachment; filename=" + key + ".json"
+        #return response
+        return FileResponse(open(file, 'rb'))
     else:
         return HttpResponse("File not found")
 
