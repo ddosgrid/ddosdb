@@ -439,7 +439,7 @@ def attack_trace(request, key):
     file = ""
     for file_path in os.listdir(settings.RAW_PATH):
         filename, file_extension = os.path.splitext(file_path)
-        if filename == key and not file_extension == ".json":
+        if filename == key and file_extension == ".pcap":
             file = file_path
             break
 
